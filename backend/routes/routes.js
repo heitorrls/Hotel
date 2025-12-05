@@ -1,11 +1,11 @@
 const express = require("express");
 const {
-  Usuarios,
-  Clientes,
-  Quartos,
-  TiposQuarto,
-  Reservas,
-  Consumos,
+  usuarios,
+  clientes,
+  quartos,
+  tiposquarto,
+  reservas,
+  consumos,
 } = require("../models/models");
 const db = require("../config/database");
 const { comparePassword, generateToken, requireAuth, requireAdmin, requireAdminOrGerente } = require("../security");
@@ -20,7 +20,7 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Usuário e senha são obrigatórios" });
   }
 
-  Usuarios.findAll((err, results) => {
+  usuarios.findAll((err, results) => {
     if (err) {
       return res.status(500).json({ message: "Erro no servidor", error: err });
     }
@@ -57,7 +57,7 @@ router.post("/login", async (req, res) => {
 });
 
 router.get("/clientes", (req, res) => {
-  Clientes.findAll((err, results) => {
+  clientes.findAll((err, results) => {
     if (err)
       return res
         .status(500)
@@ -112,7 +112,7 @@ router.post("/clientes", (req, res) => {
 
 router.get("/clientes/:id", (req, res) => {
   const { cpf } = req.params;
-  Clientes.findByCpf(cpf, (err, result) => {
+  clientes.findByCpf(cpf, (err, result) => {
     if (err) {
       return res
         .status(500)
@@ -128,7 +128,7 @@ router.get("/clientes/:id", (req, res) => {
 // Nova rota específica para buscar cliente por passaporte (evita conflito com rota por CPF)
 router.get("/clientes/passaporte/:passaporte", (req, res) => {
   const { passaporte } = req.params;
-  Clientes.findByPassaporte(passaporte, (err, result) => {
+  clientes.findByPassaporte(passaporte, (err, result) => {
     if (err) {
       return res
         .status(500)
@@ -143,7 +143,7 @@ router.get("/clientes/passaporte/:passaporte", (req, res) => {
 
 router.get("/clientes/cpf/:cpf", (req, res) => {
   const { cpf } = req.params;
-  Clientes.findByCpf(cpf, (err, result) => {
+  clientes.findByCpf(cpf, (err, result) => {
     if (err) {
       return res
         .status(500)
@@ -230,7 +230,7 @@ router.put("/clientes/:id", (req, res) => {
 // Novo: Rota para deletar cliente por ID (Acessada pelo frontend/clientes.html)
 router.delete("/clientes/:id", (req, res) => {
   const id = req.params.id;
-  Clientes.deleteById(id, (err, result) => {
+  clientes.deleteById(id, (err, result) => {
     if (err) {
       // 1451: ER_ROW_IS_REFERENCED_2 (Erro de integridade referencial - Chave Estrangeira)
       if (err.code === "ER_ROW_IS_REFERENCED_2" || err.errno === 1451) {
@@ -256,8 +256,8 @@ router.get("/quartos", (req, res) => {
     `SELECT q.numero, tq.tipo, q.tipo_id, q.descricao, 
             COALESCE(q.valor_diaria, tq.valor_diaria) as valor_diaria, 
             q.status
-     FROM Quartos q
-     JOIN TiposQuarto tq ON q.tipo_id = tq.id`, // Adicionado q.tipo_id aqui
+     FROM quartos q
+     JOIN tiposquarto tq ON q.tipo_id = tq.id`, // Adicionado q.tipo_id aqui
     (err, results) => {
       if (err)
         return res
@@ -271,7 +271,7 @@ router.get("/quartos", (req, res) => {
 // Buscar quarto por número
 router.get("/quartos/:numero", (req, res) => {
   const { numero } = req.params;
-  Quartos.findByNumero(numero, (err, result) => {
+  quartos.findByNumero(numero, (err, result) => {
     if (err) {
       return res
         .status(500)
@@ -293,7 +293,7 @@ router.post("/quartos", (req, res) => {
       .status(400)
       .json({ message: "Preencha todos os campos obrigatórios!" });
   }
-  Quartos.create(
+  quartos.create(
     { numero, tipo_id, descricao, valor_diaria, status },
     (err, result) => {
       if (err) {
@@ -317,7 +317,7 @@ router.put("/quartos/:numero", (req, res) => {
       .status(400)
       .json({ message: "Preencha todos os campos obrigatórios!" });
   }
-  Quartos.update(
+  quartos.update(
     numero,
     { tipo_id, status, descricao, valor_diaria },
     (err, result) => {
@@ -336,7 +336,7 @@ router.put("/quartos/:numero", (req, res) => {
 // Deletar quarto por número
 router.delete("/quartos/:numero", (req, res) => {
   const { numero } = req.params;
-  Quartos.delete(numero, (err, result) => {
+  quartos.delete(numero, (err, result) => {
     if (err) {
       // Erro de integridade referencial (MySQL/MariaDB)
       if (err.code === "ER_ROW_IS_REFERENCED_2" || err.errno === 1451) {
@@ -367,10 +367,10 @@ router.get("/checkins-hoje", requireAuth, (req, res) => {
             r.hora_checkin as hora, c.telefone, c.email, 
             COALESCE(r.valor_diaria, r.valor_diaria_base, q.valor_diaria, tq.valor_diaria) as valor_diaria,
             r.motivo_hospedagem
-     FROM Reservas r
-     JOIN Clientes c ON r.cliente_id = c.id
-     JOIN Quartos q ON r.quarto_numero = q.numero
-     JOIN TiposQuarto tq ON q.tipo_id = tq.id
+     FROM reservas r
+     JOIN clientes c ON r.cliente_id = c.id
+     JOIN quartos q ON r.quarto_numero = q.numero
+     JOIN tiposquarto tq ON q.tipo_id = tq.id
      WHERE DATE(r.data_checkin) = ? AND r.status = 'ativo'`,
     [hoje],
     (err, results) => {
@@ -399,10 +399,10 @@ router.get("/checkouts-hoje", requireAuth, (req, res) => {
             r.hora_checkout as hora, c.telefone, c.email, 
             COALESCE(r.valor_diaria, r.valor_diaria_base, q.valor_diaria, tq.valor_diaria) as valor_diaria,
             r.motivo_hospedagem
-     FROM Reservas r
-     JOIN Clientes c ON r.cliente_id = c.id
-     JOIN Quartos q ON r.quarto_numero = q.numero
-     JOIN TiposQuarto tq ON q.tipo_id = tq.id
+     FROM reservas r
+     JOIN clientes c ON r.cliente_id = c.id
+     JOIN quartos q ON r.quarto_numero = q.numero
+     JOIN tiposquarto tq ON q.tipo_id = tq.id
      WHERE DATE(r.data_checkout) = ?`,
     [hoje],
     (err, results) => {
@@ -417,7 +417,7 @@ router.get("/checkouts-hoje", requireAuth, (req, res) => {
 
 // Listar tipos de quarto
 router.get("/tipos-quarto", (req, res) => {
-  TiposQuarto.findAll((err, results) => {
+  tiposquarto.findAll((err, results) => {
     if (err)
       return res
         .status(500)
@@ -429,7 +429,7 @@ router.get("/tipos-quarto", (req, res) => {
 // Criar novo tipo de quarto
 router.post("/tipos-quarto", (req, res) => {
   const { tipo, descricao, valor_diaria } = req.body;
-  TiposQuarto.create({ tipo, descricao, valor_diaria }, (err, result) => {
+  tiposquarto.create({ tipo, descricao, valor_diaria }, (err, result) => {
     if (err)
       return res
         .status(500)
@@ -444,7 +444,7 @@ router.delete("/tipos-quarto/:id", (req, res) => {
 
   // Antes de excluir, verificar se há quartos associados a este tipo
   db.query(
-    "SELECT COUNT(*) AS total FROM Quartos WHERE tipo_id = ?",
+    "SELECT COUNT(*) AS total FROM quartos WHERE tipo_id = ?",
     [id],
     (err, rows) => {
       if (err) {
@@ -457,7 +457,7 @@ router.delete("/tipos-quarto/:id", (req, res) => {
         });
       }
 
-      TiposQuarto.delete(id, (delErr, result) => {
+      tiposquarto.delete(id, (delErr, result) => {
         if (delErr) {
           // Integridade referencial
           if (delErr.code === "ER_ROW_IS_REFERENCED_2" || delErr.errno === 1451) {
@@ -511,7 +511,7 @@ router.post("/checkin", (req, res) => {
   // PASSO 1: Buscar o ID do cliente a partir do CPF OU Passaporte
   db.query(
     // CORREÇÃO DE QUERY: Usa as variáveis cliente_cpf e cliente_passaporte corretamente
-    `SELECT id FROM Clientes WHERE cpf = ? OR passaporte = ?`,
+    `SELECT id FROM clientes WHERE cpf = ? OR passaporte = ?`,
     [cliente_cpf, cliente_passaporte], 
     (idErr, idResults) => {
       if (idErr) {
@@ -524,7 +524,7 @@ router.post("/checkin", (req, res) => {
       const cliente_id = idResults[0].id; // ID do cliente obtido
 
       db.query(
-        `SELECT id FROM Reservas WHERE quarto_numero = ? AND status = 'ativo'`,
+        `SELECT id FROM reservas WHERE quarto_numero = ? AND status = 'ativo'`,
         [quarto_numero],
         (err, results) => {
           if (err)
@@ -539,7 +539,7 @@ router.post("/checkin", (req, res) => {
 
           // PASSO 3: Verificar reserva ativa para o cliente (AGORA USANDO CLIENTE_ID)
           db.query(
-            `SELECT id FROM Reservas WHERE cliente_id = ? AND status = 'ativo'`,
+            `SELECT id FROM reservas WHERE cliente_id = ? AND status = 'ativo'`,
             [cliente_id],
             (err2, results2) => {
               if (err2)
@@ -557,7 +557,7 @@ router.post("/checkin", (req, res) => {
 
               // PASSO 4: Inserir a nova reserva (AGORA USANDO CLIENTE_ID)
               db.query(
-                `INSERT INTO Reservas 
+                `INSERT INTO reservas 
      (cliente_id, quarto_numero, data_checkin, hora_checkin, valor_diaria, valor_diaria_base, motivo_hospedagem, data_checkout_prevista, hora_checkout_prevista, status, pago_booking)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ativo', ?)`, 
                 [
@@ -583,7 +583,7 @@ router.post("/checkin", (req, res) => {
                   const reservaId = result.insertId;
 
                   db.query(
-                    `UPDATE Quartos SET status = 'ocupado' WHERE numero = ?`,
+                    `UPDATE quartos SET status = 'ocupado' WHERE numero = ?`,
                     [quarto_numero],
                     async (err2) => {
                       if (err2)
@@ -604,7 +604,7 @@ router.post("/checkin", (req, res) => {
                           ]
                         );
                         db.query(
-                          `INSERT INTO Acompanhantes (reserva_id, nome, cpf, passaporte, data_nascimento) VALUES ?`,
+                          `INSERT INTO acompanhantes (reserva_id, nome, cpf, passaporte, data_nascimento) VALUES ?`,
                           [acompanhantesData],
                           (err3) => {
                             if (err3) {
@@ -658,7 +658,7 @@ router.put("/checkout/:id", (req, res) => {
 
   // Buscar dados da reserva (valor atual e base)
   db.query(
-    `SELECT quarto_numero, valor_diaria_base, valor_diaria FROM Reservas WHERE id = ?`,
+    `SELECT quarto_numero, valor_diaria_base, valor_diaria FROM reservas WHERE id = ?`,
     [id],
     (errGet, rows) => {
       if (errGet) return res.status(500).json({ message: 'Erro ao buscar reserva', error: errGet });
@@ -669,14 +669,14 @@ router.put("/checkout/:id", (req, res) => {
 
       // Atualizar a reserva com valor final e registrar checkout
       db.query(
-        `UPDATE Reservas SET data_checkout = ?, hora_checkout = ?, status = 'finalizado', valor_diaria = ? WHERE id = ?`,
+        `UPDATE reservas SET data_checkout = ?, hora_checkout = ?, status = 'finalizado', valor_diaria = ? WHERE id = ?`,
         [data_checkout, hora_checkout, valorFinal, id],
         (errUpdate) => {
           if (errUpdate) return res.status(500).json({ message: 'Erro ao registrar check-out', error: errUpdate });
 
           // Atualize o status do quarto
           db.query(
-            `UPDATE Quartos SET status = 'disponivel' WHERE numero = (SELECT quarto_numero FROM Reservas WHERE id = ?)`,
+            `UPDATE quartos SET status = 'disponivel' WHERE numero = (SELECT quarto_numero FROM reservas WHERE id = ?)`,
             [id],
             (err2) => {
               if (err2) {
@@ -710,12 +710,12 @@ let sql = `
            r.status,
            r.motivo_hospedagem,
            r.id,
-           (SELECT COUNT(*) FROM Acompanhantes WHERE reserva_id = r.id) AS num_acompanhantes,
+           (SELECT COUNT(*) FROM acompanhantes WHERE reserva_id = r.id) AS num_acompanhantes,
            (SELECT COALESCE(JSON_ARRAYAGG(
              JSON_OBJECT('nome', nome, 'cpf', cpf, 'passaporte', passaporte, 'data_nascimento', data_nascimento) -- ALTERADO: Inclui 'passaporte' do acompanhante
-           ), '[]') FROM Acompanhantes WHERE reserva_id = r.id) AS acompanhantes
-    FROM Reservas r
-    JOIN Clientes c ON r.cliente_id = c.id
+           ), '[]') FROM acompanhantes WHERE reserva_id = r.id) AS acompanhantes
+    FROM reservas r
+    JOIN clientes c ON r.cliente_id = c.id
   `;
   let params = [];
   let conditions = [];
@@ -755,7 +755,7 @@ router.get("/reserva-ativa/:cpf", (req, res) => {
 
   db.query(
     // Procura na coluna CPF OU na coluna Passaporte
-    `SELECT id FROM Clientes WHERE cpf = ? OR passaporte = ?`,
+    `SELECT id FROM clientes WHERE cpf = ? OR passaporte = ?`,
     [identifier, identifier],
     (errId, resultId) => {
       if (errId) {
@@ -769,10 +769,10 @@ router.get("/reserva-ativa/:cpf", (req, res) => {
       const cliente_id = resultId[0].id;
       db.query(
   `SELECT r.*, c.nome, c.telefone, c.email, c.cep, c.endereco, q.numero as quarto, tq.valor_diaria AS tq_valor_diaria
-         FROM Reservas r
-         JOIN Clientes c ON r.cliente_id = c.id
-         JOIN Quartos q ON r.quarto_numero = q.numero
-         JOIN TiposQuarto tq ON q.tipo_id = tq.id
+         FROM reservas r
+         JOIN clientes c ON r.cliente_id = c.id
+         JOIN quartos q ON r.quarto_numero = q.numero
+         JOIN tiposquarto tq ON q.tipo_id = tq.id
          WHERE r.cliente_id = ? AND r.status = 'ativo'
          ORDER BY r.data_checkin DESC LIMIT 1`,
         [cliente_id], 
@@ -823,8 +823,8 @@ router.get("/ocupacao-quartos", (req, res) => {
         ELSE IFNULL(r.data_checkout, r.data_checkout_prevista)
       END as data_saida_visual,
       c.nome as cliente
-    FROM Reservas r
-    JOIN Clientes c ON r.cliente_id = c.id
+    FROM reservas r
+    JOIN clientes c ON r.cliente_id = c.id
     WHERE
       r.status IN ('ativo', 'finalizado') AND
       r.data_checkin <= ? AND
@@ -840,32 +840,32 @@ router.get("/ocupacao-quartos", (req, res) => {
   });
 });
 // Modelo básico para produtos (adicione em models/models.js)
-const Produtos = {
+const produtos = {
   findAll: (callback) => {
-    db.query("SELECT * FROM Produtos", callback);
+    db.query("SELECT * FROM produtos", callback);
   },
   create: (data, callback) => {
     db.query(
-      "INSERT INTO Produtos (nome, preco_unitario, estoque) VALUES (?, ?, ?)",
+      "INSERT INTO produtos (nome, preco_unitario, estoque) VALUES (?, ?, ?)",
       [data.nome, data.preco, data.estoque],
       callback
     );
   },
   update: (id, data, callback) => {
     db.query(
-      "UPDATE Produtos SET nome = ?, preco_unitario = ?, estoque = ? WHERE id = ?",
+      "UPDATE produtos SET nome = ?, preco_unitario = ?, estoque = ? WHERE id = ?",
       [data.nome, data.preco, data.estoque, id],
       callback
     );
   },
   delete: (id, callback) => {
-    db.query("DELETE FROM Produtos WHERE id = ?", [id], callback);
+    db.query("DELETE FROM produtos WHERE id = ?", [id], callback);
   },
 };
 
 // Rotas para produtos
 router.get("/produtos", (req, res) => {
-  db.query("SELECT * FROM Produtos", (err, results) => {
+  db.query("SELECT * FROM produtos", (err, results) => {
     if (err)
       return res
         .status(500)
@@ -879,7 +879,7 @@ router.post("/produtos", (req, res) => {
   if (!nome || !preco || !estoque) {
     return res.status(400).json({ message: "Preencha todos os campos!" });
   }
-  Produtos.create({ nome, preco, estoque }, (err, result) => {
+  produtos.create({ nome, preco, estoque }, (err, result) => {
     if (err)
       return res
         .status(500)
@@ -895,7 +895,7 @@ router.post("/produtos", (req, res) => {
     return res.status(400).json({ message: "Preencha todos os campos!" });
   }
 
-  Produtos.update(id, { nome, preco, estoque }, (err, result) => {
+  produtos.update(id, { nome, preco, estoque }, (err, result) => {
     if (err) {
       console.error("Erro ao atualizar produto:", err);
       return res
@@ -911,7 +911,7 @@ router.post("/produtos", (req, res) => {
   });
 });
 router.delete("/produtos/:id", (req, res) => {
-  Produtos.delete(req.params.id, (err, result) => {
+  produtos.delete(req.params.id, (err, result) => {
     if (err)
       return res
         .status(500)
@@ -939,8 +939,8 @@ router.get("/consumos/:reserva_id", (req, res) => {
   const { reserva_id } = req.params;
   db.query(
     `SELECT c.*, p.nome as produto_nome 
-     FROM Consumos c 
-     JOIN Produtos p ON c.produto_id = p.id 
+     FROM consumos c 
+     JOIN produtos p ON c.produto_id = p.id 
      WHERE c.reserva_id = ?`,
     [reserva_id],
     (err, results) => {
@@ -972,7 +972,7 @@ router.post("/consumos", (req, res) => {
     // 2. Atualizar o estoque PRIMEIRO (e verificar se há estoque disponível)
     db.query(
       // Esta query só vai subtrair se o estoque (estoque) for >= a quantNum
-      "UPDATE Produtos SET estoque = estoque - ? WHERE id = ? AND estoque >= ?",
+      "UPDATE produtos SET estoque = estoque - ? WHERE id = ? AND estoque >= ?",
       [quantNum, produto_id, quantNum],
       (errUpdate, resultUpdate) => {
         if (errUpdate) {
@@ -993,7 +993,7 @@ router.post("/consumos", (req, res) => {
 
         // 4. Se o estoque foi atualizado, INSERIR o consumo
         db.query(
-          "INSERT INTO Consumos (reserva_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)",
+          "INSERT INTO consumos (reserva_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)",
           [reserva_id, produto_id, quantNum, preco_unitario],
           (errInsert, resultInsert) => {
             if (errInsert) {
@@ -1028,8 +1028,8 @@ router.get("/reserva-ativa-quarto/:numero", (req, res) => {
   const { numero } = req.params;
   db.query(
     `SELECT r.*, c.nome as nome_cliente 
-     FROM Reservas r
-     JOIN Clientes c ON r.cliente_id = c.id
+     FROM reservas r
+     JOIN clientes c ON r.cliente_id = c.id
      WHERE r.quarto_numero = ? AND r.status = 'ativo' 
      ORDER BY r.id DESC LIMIT 1`,
     [numero],
@@ -1048,7 +1048,7 @@ router.get("/reservas-por-quarto", (req, res) => {
   const { quarto_numero } = req.query;
   if (!quarto_numero)
     return res.status(400).json({ message: "Informe o número do quarto" });
-  Reservas.findByQuarto(quarto_numero, (err, reservas) => {
+  reservas.findByQuarto(quarto_numero, (err, reservas) => {
     if (err)
       return res
         .status(500)
@@ -1059,7 +1059,7 @@ router.get("/reservas-por-quarto", (req, res) => {
 
 // Excluir reserva
 router.delete("/reservas/:id", (req, res) => {
-  Reservas.delete(req.params.id, (err, result) => {
+  reservas.delete(req.params.id, (err, result) => {
     if (err)
       return res
         .status(500)
@@ -1073,7 +1073,7 @@ router.get("/consumos", (req, res) => {
   const { reserva_id } = req.query;
   if (!reserva_id)
     return res.status(400).json({ message: "Informe o id da reserva" });
-  Consumos.findByReserva(reserva_id, (err, consumos) => {
+  consumos.findByReserva(reserva_id, (err, consumos) => {
     if (err)
       return res
         .status(500)
@@ -1084,7 +1084,7 @@ router.get("/consumos", (req, res) => {
 
 // Excluir consumo
 router.delete("/consumos/:id", (req, res) => {
-  Consumos.delete(req.params.id, (err, result) => {
+  consumos.delete(req.params.id, (err, result) => {
     if (err)
       return res
         .status(500)
@@ -1100,10 +1100,10 @@ router.get("/hospedes-ativos", requireAuth, (req, res) => {
            r.hora_checkin as hora, c.telefone, c.email,
            COALESCE(r.valor_diaria, r.valor_diaria_base, q.valor_diaria, tq.valor_diaria) AS valor_diaria,
            r.motivo_hospedagem
-    FROM Reservas r
-    JOIN Clientes c ON r.cliente_id = c.id
-    JOIN Quartos q ON r.quarto_numero = q.numero
-    JOIN TiposQuarto tq ON q.tipo_id = tq.id 
+    FROM reservas r
+    JOIN clientes c ON r.cliente_id = c.id
+    JOIN quartos q ON r.quarto_numero = q.numero
+    JOIN tiposquarto tq ON q.tipo_id = tq.id 
     WHERE r.status = 'ativo'
     ORDER BY r.data_checkin DESC
   `;
@@ -1134,10 +1134,10 @@ router.get("/checkouts-vencidos", requireAuth, (req, res) => {
            DATE_FORMAT(r.data_checkout_prevista, '%d/%m/%Y') as data_saida_prevista,
            DATE_FORMAT(r.hora_checkout_prevista, '%H:%i') as hora_saida_prevista,
            c.telefone, c.email
-    FROM Reservas r
-    JOIN Clientes c ON r.cliente_id = c.id
-    JOIN Quartos q ON r.quarto_numero = q.numero
-    JOIN TiposQuarto tq ON q.tipo_id = tq.id 
+    FROM reservas r
+    JOIN clientes c ON r.cliente_id = c.id
+    JOIN quartos q ON r.quarto_numero = q.numero
+    JOIN tiposquarto tq ON q.tipo_id = tq.id 
     WHERE r.status = 'ativo' AND CONCAT(r.data_checkout_prevista, ' ', r.hora_checkout_prevista) < ?
     ORDER BY r.data_checkout_prevista, r.hora_checkout_prevista ASC
   `;
@@ -1153,7 +1153,7 @@ router.get("/checkouts-vencidos", requireAuth, (req, res) => {
 
 // Função utilitária para buscar cliente por CPF ou passaporte
 function buscarCliente({ cpf, passaporte }, callback) {
-  let sql = "SELECT * FROM Clientes WHERE ";
+  let sql = "SELECT * FROM clientes WHERE ";
   let params = [];
   if (cpf) {
     sql += "cpf = ?";
@@ -1190,7 +1190,7 @@ router.post("/reservas", (req, res) => {
     if (err || !cliente) return res.status(400).json({ message: "Cliente não encontrado" });
 
     db.query(
-      `INSERT INTO Reservas (
+      `INSERT INTO reservas (
         quarto_numero, cliente_id, data_checkin, hora_checkin, valor_diaria, valor_diaria_base, motivo_hospedagem, data_checkout_prevista, hora_checkout_prevista, desconto, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -1222,7 +1222,7 @@ router.post("/reservas", (req, res) => {
 
 // GET /usuarios - Listar todos os usuários (apenas admin e gerente)
 router.get("/usuarios", requireAuth, requireAdminOrGerente, (req, res) => {
-  Usuarios.findAll((err, results) => {
+  usuarios.findAll((err, results) => {
     if (err) {
       return res.status(500).json({ message: "Erro ao buscar usuários", error: err });
     }
@@ -1258,7 +1258,7 @@ router.post("/usuarios", requireAuth, requireAdminOrGerente, async (req, res) =>
   }
 
   // Verificar se usuário já existe
-  Usuarios.findAll((err, results) => {
+  usuarios.findAll((err, results) => {
     if (err) {
       return res.status(500).json({ message: "Erro ao verificar usuário", error: err });
     }
@@ -1327,7 +1327,7 @@ router.delete("/usuarios/:id", requireAuth, requireAdminOrGerente, (req, res) =>
   // Gerentes não podem deletar admins
   if (req.user.nivel_acesso === 'gerente') {
     // Primeiro, buscar o usuário para verificar seu nível
-    Usuarios.findAll((err, users) => {
+    usuarios.findAll((err, users) => {
       if (err) {
         return res.status(500).json({ message: "Erro ao verificar usuário", error: err });
       }
@@ -1387,7 +1387,7 @@ router.post("/acompanhantes", requireAuth, (req, res) => {
   ]);
 
   db.query(
-    `INSERT INTO Acompanhantes (reserva_id, nome, cpf, passaporte, data_nascimento) VALUES ?`,
+    `INSERT INTO acompanhantes (reserva_id, nome, cpf, passaporte, data_nascimento) VALUES ?`,
     [acompanhantesData],
     (err) => {
       if (err) {
@@ -1399,7 +1399,7 @@ router.post("/acompanhantes", requireAuth, (req, res) => {
       }
 
       db.query(
-        `SELECT COUNT(*) AS total FROM Acompanhantes WHERE reserva_id = ?`,
+        `SELECT COUNT(*) AS total FROM acompanhantes WHERE reserva_id = ?`,
         [reserva_id],
         (countErr, countRows) => {
           if (countErr) {
@@ -1407,7 +1407,7 @@ router.post("/acompanhantes", requireAuth, (req, res) => {
           }
           const total = countRows && countRows[0] ? countRows[0].total : acompanhantesData.length;
           res.status(201).json({
-            message: "Acompanhantes adicionados com sucesso",
+            message: "acompanhantes adicionados com sucesso",
             acompanhantes: total,
           });
         }
@@ -1421,7 +1421,7 @@ router.delete("/acompanhantes/:id", requireAuth, (req, res) => {
   const { id } = req.params;
 
   db.query(
-    `SELECT reserva_id FROM Acompanhantes WHERE id = ?`,
+    `SELECT reserva_id FROM acompanhantes WHERE id = ?`,
     [id],
     (err, results) => {
       if (err) {
@@ -1440,7 +1440,7 @@ router.delete("/acompanhantes/:id", requireAuth, (req, res) => {
       const reserva_id = results[0].reserva_id;
 
       db.query(
-        `DELETE FROM Acompanhantes WHERE id = ?`,
+        `DELETE FROM acompanhantes WHERE id = ?`,
         [id],
         (errDelete) => {
           if (errDelete) {
@@ -1451,7 +1451,7 @@ router.delete("/acompanhantes/:id", requireAuth, (req, res) => {
           }
 
           db.query(
-            `SELECT COUNT(*) AS total FROM Acompanhantes WHERE reserva_id = ?`,
+            `SELECT COUNT(*) AS total FROM acompanhantes WHERE reserva_id = ?`,
             [reserva_id],
             (countErr, countRows) => {
               if (countErr) {
