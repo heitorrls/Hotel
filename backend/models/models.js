@@ -66,6 +66,7 @@ const clientes = {
     );
   },
   update: (id, data, callback) => {
+    // Chama updateById para manter compatibilidade
     clientes.updateById(id, data, callback);
   },
   updateById: (id, data, callback) => {

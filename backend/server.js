@@ -12,12 +12,13 @@ app.use(bodyParser.json());
 
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-db.connect(err => {
+// Teste de conexão (Adaptado para Pool)
+db.query('SELECT 1', (err, results) => {
   if (err) {
-    console.error('Erro ao conectar ao banco de dados:', err);
-    process.exit(1); 
+    console.error('Erro crítico no banco de dados:', err);
+  } else {
+    console.log('Banco de dados conectado com sucesso (Pool)!');
   }
-  console.log('Conexão com o banco de dados estabelecida!');
 });
 
 app.get('/', (req, res) => {
