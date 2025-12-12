@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const senha = document.getElementById('senha').value;
 
       try {
-        const response = await fetch('http://localhost:3000/api/login', {
+        const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ usuario, senha }),
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const nacionalidade = document.getElementById('nacionalidade').value;
 
       try {
-        const response = await fetch('http://localhost:3000/api/clientes', {
+        const response = await fetch('/api/clientes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nome, cpf, telefone, email, endereco, cep, passaporte, data_nascimento, nacionalidade }),
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let tiposQuarto = [];
 
   async function carregarTiposQuarto() {
-    const resp = await fetch('http://localhost:3000/api/tipos-quarto');
+    const resp = await fetch('/api/tipos-quarto');
     const tiposQuarto = await resp.json();
     const select = document.getElementById('tipo_id');
     if (select) {
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const status = 'disponivel';
 
       try {
-        const response = await fetch('http://localhost:3000/api/quartos', {
+        const response = await fetch('/api/quartos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Salva o novo tipo no backend
-      const resp = await fetch('http://localhost:3000/api/tipos-quarto', {
+      const resp = await fetch('/api/tipos-quarto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo, descricao, valor_diaria })
