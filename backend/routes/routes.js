@@ -1415,7 +1415,51 @@ router.post("/acompanhantes", requireAuth, (req, res) => {
     }
   );
 });
+// Rota para exportar Reservas em CSV
+router.get('/reservas/exportar', (req, res) => {
+    const query = "SELECT * FROM reservas";
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Erro ao exportar:", err);
+            return res.status(500).send("Erro ao buscar dados.");
+        }
+
+        // Se não tiver reservas, avisa
+        if (results.length === 0) {
+            return res.status(404).send("Nenhuma reserva encontrada para exportar.");
+        }
+
+        // 1. Criar o Cabeçalho (Nomes das Colunas)
+        const colunas = Object.keys(results[0]);
+        const header = colunas.join(';') + '\n'; // Usamos ponto-e-vírgula (padrão Excel BR)
+
+        // 2. Criar as Linhas (Dados)
+        const linhas = results.map(row => {
+            return colunas.map(col => {
+                let val = row[col];
+                
+                // Tratamento para datas (formata bonito se for data)
+                if (val instanceof Date) {
+                    val = val.toISOString().split('T')[0]; // Pega só YYYY-MM-DD
+                }
+                // Tratamento para nulos
+                if (val === null || val === undefined) {
+                    val = '';
+                }
+                
+                return String(val); // Garante que é texto
+            }).join(';');
+        }).join('\n');
+
+        const csvContent = header + linhas;
+
+        // 3. Enviar o arquivo para download
+        res.header('Content-Type', 'text/csv');
+        res.attachment('relatorio_reservas.csv');
+        return res.send(csvContent);
+    });
+});
 // DELETE /acompanhantes/:id - Remover acompanhante e recalcular diária
 router.delete("/acompanhantes/:id", requireAuth, (req, res) => {
   const { id } = req.params;
