@@ -398,7 +398,21 @@
             <div id="reservas-futuras-tab" class="tab">Reservas Futuras</div>
           </div>
         </div>
-
+        <div style="margin-bottom: 20px; text-align: right;">
+           <button 
+                  onclick="window.location.href='/api/reservas/exportar'"
+                  style="
+                      background-color: #28a745; 
+                      color: white; 
+                      padding: 10px 20px; 
+                      border: none; 
+                      border-radius: 5px; 
+                      cursor: pointer;
+                      font-weight: bold;"
+              >
+               Exportar para Excel (CSV)
+           </button>
+        </div>
         <div class="card">
           <div class="section-title" id="table-title">Todas as Reservas</div>
 
