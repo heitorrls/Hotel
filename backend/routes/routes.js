@@ -749,6 +749,110 @@ let sql = `
   });
 });
 
+// Rota para exportar reservas com consumos para CSV (Excel)
+router.get("/reservas-exportar", requireAuth, (req, res) => {
+  const sql = `
+    SELECT 
+      r.id,
+      r.quarto_numero,
+      r.data_checkin,
+      r.data_checkout,
+      r.data_checkout_prevista,
+      r.hora_checkin,
+      r.hora_checkout,
+      r.status,
+      r.valor_diaria,
+      r.valor_diaria_base,
+      r.desconto,
+      r.motivo_hospedagem,
+      r.pago_booking,
+      p.nome AS nome_produto, 
+      c.quantidade AS consumo_quantidade, 
+      c.preco_unitario AS consumo_preco_unitario, 
+      c.data_hora AS data_consumo
+    FROM reservas r
+    LEFT JOIN consumos c ON r.id = c.reserva_id
+    LEFT JOIN produtos p ON c.produto_id = p.id
+    ORDER BY r.id, c.data_hora
+  `;
+
+  db.query(sql, [], (err, results) => {
+    if (err) {
+      console.error("Erro ao exportar dados:", err);
+      return res.status(500).json({ message: "Erro ao exportar dados", error: err });
+    }
+
+    // Se não houver resultados, retorna mensagem
+    if (!results || results.length === 0) {
+      return res.status(404).json({ message: "Nenhum dado encontrado para exportar" });
+    }
+
+    // Criar CSV
+    const headers = [
+      "ID Reserva",
+      "Número do Quarto",
+      "Data Check-in",
+      "Data Check-out",
+      "Data Check-out Prevista",
+      "Hora Check-in",
+      "Hora Check-out",
+      "Status",
+      "Valor Diária",
+      "Valor Diária Base",
+      "Desconto",
+      "Motivo Hospedagem",
+      "Pago Booking",
+      "Nome Produto",
+      "Quantidade",
+      "Preço Unitário",
+      "Data Consumo"
+    ];
+
+    const csvRows = [headers.join(";")];
+
+    results.forEach((row) => {
+      const values = [
+        row.id,
+        row.quarto_numero,
+        row.data_checkin ? row.data_checkin.toISOString().split("T")[0] : "",
+        row.data_checkout ? row.data_checkout.toISOString().split("T")[0] : "",
+        row.data_checkout_prevista ? row.data_checkout_prevista.toISOString().split("T")[0] : "",
+        row.hora_checkin || "",
+        row.hora_checkout || "",
+        row.status || "",
+        row.valor_diaria || "",
+        row.valor_diaria_base || "",
+        row.desconto || "",
+        row.motivo_hospedagem || "",
+        row.pago_booking ? "Sim" : "Não",
+        row.nome_produto || "",
+        row.consumo_quantidade || "",
+        row.consumo_preco_unitario || "",
+        row.data_consumo ? row.data_consumo.toISOString().split("T")[0] : ""
+      ];
+
+      // Escapar valores que contêm ponto-e-vírgula, aspas ou quebras de linha
+      const escapedValues = values.map((val) => {
+        const str = String(val);
+        if (str.includes(";") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      });
+
+      csvRows.push(escapedValues.join(";"));
+    });
+
+    const csvContent = csvRows.join("\n");
+
+    // Configurar headers para download
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", "attachment; filename=reservas_consumos.csv");
+
+    res.send(csvContent);
+  });
+});
+
 // GET /api/reserva-ativa/:cpf (Onde :cpf agora representa CPF ou Passaporte)
 router.get("/reserva-ativa/:cpf", (req, res) => {
   const identifier = req.params.cpf;

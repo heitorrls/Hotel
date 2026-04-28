@@ -400,7 +400,7 @@
         </div>
         <div style="margin-bottom: 20px; text-align: right;">
            <button 
-                  onclick="window.location.href='/api/reservas/exportar'"
+                  onclick="exportarCSV()"
                   style="
                       background-color: #28a745; 
                       color: white; 
@@ -616,6 +616,47 @@
         }
 
         modal.style.display = "flex";
+      }
+
+      // Função para exportar dados para CSV (Excel)
+      async function exportarCSV() {
+        const token = sessionStorage.getItem("token");
+        if (!token) {
+          alert("Sessão expirada. Faça login novamente.");
+          window.location.href = "login.html";
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/reservas-exportar", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Erro ao exportar: ${response.statusText}`);
+          }
+
+          // Converter resposta para blob (arquivo binário)
+          const blob = await response.blob();
+
+          // Criar link para download
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "reservas_consumos.csv";
+          document.body.appendChild(a);
+          a.click();
+
+          // Limpar
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } catch (error) {
+          console.error("Erro ao exportar CSV:", error);
+          alert("Erro ao exportar dados. Verifique o console para detalhes.");
+        }
       }
 
       document.addEventListener("DOMContentLoaded", () => {
