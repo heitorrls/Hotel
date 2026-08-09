@@ -707,6 +707,8 @@ let sql = `
            DATE_FORMAT(r.hora_checkin, '%H:%i') as hora_entrada,
            DATE_FORMAT(IFNULL(r.data_checkout, r.data_checkout_prevista), '%d/%m/%Y') as data_saida,
            DATE_FORMAT(IFNULL(r.hora_checkout, r.hora_checkout_prevista), '%H:%i') as hora_saida,
+           COALESCE(r.valor_diaria, r.valor_diaria_base, q.valor_diaria, tq.valor_diaria) AS valor_diaria,
+           q.valor_diaria AS quarto_valor_diaria,
            r.status,
            r.motivo_hospedagem,
            r.id,
@@ -716,6 +718,8 @@ let sql = `
            ), '[]') FROM acompanhantes WHERE reserva_id = r.id) AS acompanhantes
     FROM reservas r
     JOIN clientes c ON r.cliente_id = c.id
+    LEFT JOIN quartos q ON q.numero = r.quarto_numero
+    LEFT JOIN tiposquarto tq ON tq.id = q.tipo_id
   `;
   let params = [];
   let conditions = [];
@@ -893,11 +897,33 @@ router.get("/reserva-ativa/:cpf", (req, res) => {
           // Calcular valor final com taxa (se houver acompanhantes e taxa)
           const reserva = results[0];
           const valorBase = reserva.valor_diaria_base || reserva.valor_diaria || reserva.tq_valor_diaria || 0;
-          // Sem cobrança de taxa de acompanhante: o valor final é o próprio valor da diária armazenado
-          res.json({ 
-            ...reserva, 
-            valor_diaria_final: reserva.valor_diaria || valorBase
-          });
+          const valorDiaria = reserva.valor_diaria || valorBase;
+          db.query(
+            `SELECT COALESCE(SUM(quantidade * preco_unitario), 0) AS consumo_total FROM consumos WHERE reserva_id = ?`,
+            [reserva.id],
+            (errConsumo, consumoRows) => {
+              if (errConsumo) {
+                console.error('Erro ao buscar consumos da reserva ativa:', errConsumo);
+                return res.status(500).json({ message: 'Erro ao buscar consumos da reserva ativa', error: errConsumo });
+              }
+
+              const consumoTotal = consumoRows[0]?.consumo_total || 0;
+              const dataCheckin = reserva.data_checkin;
+              const dataCheckout = reserva.data_checkout || reserva.data_checkout_prevista || new Date().toISOString().slice(0, 10);
+              const checkinDate = new Date(dataCheckin);
+              const checkoutDate = new Date(dataCheckout);
+              let diffDays = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+              if (diffDays <= 0) diffDays = 1;
+
+              res.json({ 
+                ...reserva, 
+                valor_diaria_final: valorDiaria,
+                consumo_total: consumoTotal,
+                qtd_dias: diffDays,
+                total_estimado: Number(valorDiaria) * diffDays + Number(consumoTotal)
+              });
+            }
+          );
         }
       );
     }

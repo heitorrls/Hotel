@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema Hotel - Relatório</title>
+    <script>
+      if (!sessionStorage.getItem('user') || !sessionStorage.getItem('token')) {
+        window.location.replace('login.html');
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="imagens/logo_branco .svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="imagens/logo_branco .svg" />
+    <link rel="logo" href="imagens/logo_branco .svg" />
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <style>
+      :root {
+        --background-color: #f4f7fa;
+        --sidebar-bg: #ffffff;
+        --card-bg: #ffffff;
+        --text-color: #4a5568;
+        --heading-color: #1a202c;
+        --primary-color: #4a90e2;
+        --secondary-color: #e2e8f0;
+        --secondary-text-color: #4a5568;
+        --border-color: #e2e8f0;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+      }
+
+      .main-flex {
+        display: flex;
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 240px;
+        background-color: var(--sidebar-bg);
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border-color);
+        flex-shrink: 0;
+      }
+
+      .sidebar .calendar {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+
+      .sidebar .calendar-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .sidebar #dateTime {
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .menu-btn {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-color);
+        font-weight: 500;
+        transition: background-color 0.2s, color 0.2s;
+      }
+
+      .menu-btn.active,
+      .menu-btn:hover {
+        background-color: var(--primary-color);
+        color: #fff;
+      }
+
+      .user-card {
+        margin-top: auto;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .user-name {
+        font-weight: 600;
+        color: var(--heading-color);
+        font-size: 0.95rem;
+      }
+
+      .user-role {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        opacity: 0.8;
+      }
+
+      .logout-btn {
+        background-color: #e53e3e;
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .logout-btn:hover {
+        background-color: #c53030;
+      }
+
+      .main-content {
+        flex-grow: 1;
+        padding: 2rem;
+        overflow-y: auto;
+      }
+
+      .tab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .tab-header h1 {
+        font-size: 1.8rem;
+        color: var(--heading-color);
+      }
+
+      .card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+      }
+
+      .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--heading-color);
+        margin-bottom: 1rem;
+      }
+
+      .metrics-grid,
+      .revenue-grid,
+      .compact-grid {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(4, minmax(180px, 1fr));
+      }
+
+      .revenue-grid {
+        grid-template-columns: repeat(3, minmax(220px, 1fr));
+      }
+
+      .compact-grid {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+      }
+
+      .metric-card,
+      .report-card {
+        padding: 1.1rem 1.2rem;
+        border-radius: 14px;
+        background: #f8f9fb;
+        border: 1px solid rgba(226, 232, 240, 0.85);
+      }
+
+      .metric-card h3,
+      .report-card h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--heading-color);
+      }
+
+      .metric-card strong {
+        display: block;
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        color: var(--heading-color);
+      }
+
+      .metric-card span {
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .filter-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .filter-group label {
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+        color: var(--text-color);
+        opacity: 0.8;
+      }
+
+      .filter-group input,
+      .filter-group select,
+      .filter-group button {
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background-color: white;
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .filter-group button {
+        border: none;
+        background-color: var(--primary-color);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .filter-group button:hover {
+        background-color: #357ab8;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      th,
+      td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+      }
+
+      thead th {
+        font-weight: 600;
+        color: var(--heading-color);
+        background-color: #f8f9fa;
+      }
+
+      tbody tr:hover {
+        background-color: #f8f9fa;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .status-ativo {
+        background: #e8f8ff;
+        color: #0d6efd;
+      }
+
+      .status-finalizado {
+        background: #e9f7f6;
+        color: #0f766e;
+      }
+
+      .status-cancelado {
+        background: #fbe9e7;
+        color: #c53030;
+      }
+
+      .status-disponivel {
+        background: #e6ffed;
+        color: #2f855a;
+      }
+
+      .status-ocupado {
+        background: #fff4e5;
+        color: #b45309;
+      }
+
+      .status-manutencao,
+      .status-interditado {
+        background: #f7f7f7;
+        color: #4a5568;
+      }
+
+      @media (max-width: 1200px) {
+        .metrics-grid,
+        .revenue-grid,
+        .compact-grid,
+        .filter-row {
+          grid-template-columns: repeat(2, minmax(220px, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .sidebar {
+          width: 100%;
+          position: relative;
+        }
+
+        .main-flex {
+          flex-direction: column;
+        }
+
+        .filter-row,
+        .metrics-grid,
+        .revenue-grid,
+        .compact-grid {
+          grid-template-columns: 1fr;
+        }
+
+        table {
+          font-size: 0.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-flex">
+      <div class="sidebar">
+        <div class="calendar">
+          <div class="calendar-icon">
+            <img src="imagens/LOGO HOTEL azul .svg.svg" alt="Logo" />
+          </div>
+          <div class="date-time" id="dateTime"></div>
+        </div>
+        <a href="index.html" class="menu-btn">🏠 Ínicio</a>
+        <a href="checkin.html" class="menu-btn">📥 Check-in</a>
+        <a href="checkout.html" class="menu-btn">📤 Check-out</a>
+        <a href="clientes.html" class="menu-btn">👤 Clientes</a>
+        <a href="quartos.html" class="menu-btn">🛏️ Quartos</a>
+        <a href="reservas.html" class="menu-btn">📋 Reservas</a>
+        <a href="produtos.html" class="menu-btn">🛒 Produtos</a>
+        <a href="calendario.html" class="menu-btn">📅 Calendário</a>
+        <a href="relatorio.html" class="menu-btn active">📊 Relatório</a>
+        <div class="user-card">
+          <div class="user-info">
+            <div class="user-name" id="sidebarUserName">—</div>
+            <div class="user-role" id="sidebarUserRole">padrão</div>
+          </div>
+          <button class="logout-btn" id="sidebarLogoutBtn">Sair</button>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="tab-header">
+          <h1>Relatório</h1>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Visão geral do Hotel</div>
+          <div class="metrics-grid" id="summaryCards">
+            <div class="metric-card">
+              <h3>Total de reservas</h3>
+              <strong id="totalReservas">0</strong>
+              <span>Reservas registradas</span>
+            </div>
+            <div class="metric-card">
+              <h3>Reservas ativas</h3>
+              <strong id="totalAtivas">0</strong>
+              <span>Reservas em andamento</span>
+            </div>
+            <div class="metric-card">
+              <h3>Reservas futuras</h3>
+              <strong id="totalFuturas">0</strong>
+              <span>Check-ins previstos</span>
+            </div>
+            <div class="metric-card">
+              <h3>Clientes cadastrados</h3>
+              <strong id="totalClientes">0</strong>
+              <span>Clientes ativos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Filtros de relatório</div>
+          <div class="filter-row">
+            <div class="filter-group">
+              <label for="filterStartDate">Data Inicial</label>
+              <input type="date" id="filterStartDate" />
+            </div>
+            <div class="filter-group">
+              <label for="filterEndDate">Data Final</label>
+              <input type="date" id="filterEndDate" />
+            </div>
+            <div class="filter-group">
+              <label for="filterStatus">Status da reserva</label>
+              <select id="filterStatus">
+                <option value="">Todos</option>
+                <option value="ativo">Ativo</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterTipoQuarto">Tipo de quarto</label>
+              <select id="filterTipoQuarto">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>&nbsp;</label>
+              <button id="clearReportFilters">Limpar filtros</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Análise de faturamento</div>
+          <div class="revenue-grid">
+            <div class="report-card">
+              <h3>Faturamento total</h3>
+              <strong id="totalFaturamento">R$0,00</strong>
+              <span>Soma de todas as reservas</span>
+            </div>
+            <div class="report-card">
+              <h3>Faturamento ativo</h3>
+              <strong id="faturamentoAtivo">R$0,00</strong>
+              <span>Reservas em andamento</span>
+            </div>
+            <div class="report-card">
+              <h3>Faturamento futuro</h3>
+              <strong id="faturamentoFuturo">R$0,00</strong>
+              <span>Reservas previstas</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Ocupaçãodo hotel e quartos</div>
+          <div class="compact-grid" id="roomStatusCards">
+            <div class="metric-card">
+              <h3>Disponíveis</h3>
+              <strong id="statusDisponivel">0</strong>
+              <span>Quartos livres</span>
+            </div>
+            <div class="metric-card">
+              <h3>Ocupados</h3>
+              <strong id="statusOcupado">0</strong>
+              <span>Quartos em uso</span>
+            </div>
+            <div class="metric-card">
+              <h3>Manutenção</h3>
+              <strong id="statusManutencao">0</strong>
+              <span>Quartos em manutenção</span>
+            </div>
+            <div class="metric-card">
+              <h3>Interditados</h3>
+              <strong id="statusInterditado">0</strong>
+              <span>Quartos fora de operação</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Últimas reservas</div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Quarto</th>
+                  <th>Tipo</th>
+                  <th>Entrada</th>
+                  <th>Saída</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="latestReservationsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Próximos check-ins e check-outs</div>
+          <div class="compact-grid">
+            <div class="report-card">
+              <h3>Check-ins de hoje</h3>
+              <strong id="checkinsHojeCount">0</strong>
+              <div class="table-wrapper" style="margin-top: 1rem; max-height: 280px; overflow-y: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Quarto</th>
+                      <th>Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody id="checkinsHojeBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="report-card">
+              <h3>Check-outs de hoje</h3>
+              <strong id="checkoutsHojeCount">0</strong>
+              <div class="table-wrapper" style="margin-top: 1rem; max-height: 280px; overflow-y: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Quarto</th>
+                      <th>Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody id="checkoutsHojeBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Top 5 quartos por faturamento</div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Quarto</th>
+                  <th>Tipo</th>
+                  <th>Reservas</th>
+                  <th>Faturamento</th>
+                </tr>
+              </thead>
+              <tbody id="topRoomsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let allReservas = [];
+      let allQuartos = [];
+      let allClientes = [];
+      let reservasFuturas = [];
+
+      function updateDateTime() {
+        const now = new Date();
+        const date = now.toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        const time = now.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        document.getElementById('dateTime').textContent = `${date}\n${time}`;
+      }
+
+      function parseDMY(value) {
+        if (!value) return null;
+        const parts = value.split('/');
+        if (parts.length !== 3) return null;
+        const [day, month, year] = parts.map(Number);
+        return new Date(year, month - 1, day);
+      }
+
+      function formatCurrency(value) {
+        if (value === null || value === undefined || Number.isNaN(Number(value))) {
+          return 'R$0,00';
+        }
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+          minimumFractionDigits: 2,
+        }).format(Number(value));
+      }
+
+      function formatStatusBadge(status) {
+        const statusMap = {
+          ativo: 'status-ativo',
+          finalizado: 'status-finalizado',
+          cancelado: 'status-cancelado',
+        };
+        const label = status || 'N/A';
+        const css = statusMap[status] || 'status-cancelado';
+        return `<span class="status-badge ${css}">${label}</span>`;
+      }
+
+      function buildTipoQuartoOptions() {
+        const select = document.getElementById('filterTipoQuarto');
+        const tipos = [...new Set(allQuartos.map((q) => q.tipo).filter(Boolean))];
+        tipos.sort();
+        tipos.forEach((tipo) => {
+          const option = document.createElement('option');
+          option.value = tipo;
+          option.textContent = tipo;
+          select.appendChild(option);
+        });
+      }
+
+      function getSelectedFilters() {
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+        const status = document.getElementById('filterStatus').value;
+        const tipo = document.getElementById('filterTipoQuarto').value;
+        return { startDate, endDate, status, tipo };
+      }
+
+      function filterReservas() {
+        const { startDate, endDate, status, tipo } = getSelectedFilters();
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        return allReservas.filter((reserva) => {
+          const reservaDate = parseDMY(reserva.data_entrada);
+          const room = allQuartos.find((q) => q.numero === reserva.quarto);
+          const tipoQuarto = room?.tipo || '';
+          const statusMatch = !status || reserva.status === status;
+          const tipoMatch = !tipo || tipoQuarto === tipo;
+          const startMatch = !start || (reservaDate && reservaDate >= start);
+          const endMatch = !end || (reservaDate && reservaDate <= end);
+          return statusMatch && tipoMatch && startMatch && endMatch;
+        });
+      }
+
+      function getRevenue(reservas) {
+        return reservas.reduce((sum, reserva) => {
+          let valor = Number(reserva.total_faturamento ?? reserva.total ?? 0);
+          if (!valor) {
+            const diaria = Number(reserva.valor_diaria ?? reserva.valorDiaria ?? reserva.valor_diaria_base ?? reserva.quarto_valor_diaria ?? 0);
+            const dias = Number(reserva.qtd_dias ?? reserva.dias ?? 1);
+            const consumo = Number(reserva.consumo_total ?? 0);
+            valor = diaria * dias + consumo;
+          }
+          return sum + (Number.isNaN(valor) ? 0 : valor);
+        }, 0);
+      }
+
+      function renderSummaryCards(filteredReservas) {
+        document.getElementById('totalReservas').textContent = allReservas.length;
+        document.getElementById('totalAtivas').textContent = allReservas.filter((r) => r.status === 'ativo').length;
+        document.getElementById('totalFuturas').textContent = reservasFuturas.length;
+        document.getElementById('totalClientes').textContent = allClientes.length;
+
+        document.getElementById('totalFaturamento').textContent = formatCurrency(getRevenue(allReservas));
+        document.getElementById('faturamentoAtivo').textContent = formatCurrency(getRevenue(allReservas.filter((r) => r.status === 'ativo')));
+        document.getElementById('faturamentoFuturo').textContent = formatCurrency(getRevenue(reservasFuturas));
+
+        const statusCounts = allQuartos.reduce(
+          (acc, quarto) => {
+            acc[quarto.status] = (acc[quarto.status] || 0) + 1;
+            return acc;
+          },
+          { disponivel: 0, ocupado: 0, manutencao: 0, interditado: 0 }
+        );
+
+        document.getElementById('statusDisponivel').textContent = statusCounts.disponivel || 0;
+        document.getElementById('statusOcupado').textContent = statusCounts.ocupado || 0;
+        document.getElementById('statusManutencao').textContent = statusCounts.manutencao || 0;
+        document.getElementById('statusInterditado').textContent = statusCounts.interditado || 0;
+      }
+
+      function renderLatestReservations(filteredReservas) {
+        const body = document.getElementById('latestReservationsBody');
+        body.innerHTML = '';
+        const ordered = [...filteredReservas]
+          .sort((a, b) => parseDMY(b.data_entrada) - parseDMY(a.data_entrada))
+          .slice(0, 10);
+
+        if (ordered.length === 0) {
+          body.innerHTML = '<tr><td colspan="7">Nenhuma reserva encontrada.</td></tr>';
+          return;
+        }
+
+        ordered.forEach((reserva) => {
+          const room = allQuartos.find((q) => q.numero === reserva.quarto);
+          const tipo = room?.tipo || 'N/D';
+          const valor = formatCurrency(reserva.valor_diaria ?? reserva.valorDiaria ?? reserva.valor_diaria_base ?? reserva.quarto_valor_diaria ?? 0);
+          body.innerHTML += `
+            <tr>
+              <td>${reserva.nome || 'N/A'}</td>
+              <td>${reserva.quarto || 'N/A'}</td>
+              <td>${tipo}</td>
+              <td>${reserva.data_entrada || 'N/A'}</td>
+              <td>${reserva.data_saida || 'N/A'}</td>
+              <td>${valor}</td>
+              <td>${formatStatusBadge(reserva.status)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      function renderCheckinsHoje(checkinsHoje) {
+        const count = checkinsHoje.length;
+        document.getElementById('checkinsHojeCount').textContent = count;
+        const body = document.getElementById('checkinsHojeBody');
+        body.innerHTML = '';
+        if (count === 0) {
+          body.innerHTML = '<tr><td colspan="3">Nenhum check-in hoje.</td></tr>';
+          return;
+        }
+        checkinsHoje.forEach((item) => {
+          body.innerHTML += `
+            <tr>
+              <td>${item.nome || 'N/A'}</td>
+              <td>${item.quarto || 'N/A'}</td>
+              <td>${item.hora || 'N/A'}</td>
+            </tr>
+          `;
+        });
+      }
+
+      function renderCheckoutsHoje(checkoutsHoje) {
+        const count = checkoutsHoje.length;
+        document.getElementById('checkoutsHojeCount').textContent = count;
+        const body = document.getElementById('checkoutsHojeBody');
+        body.innerHTML = '';
+        if (count === 0) {
+          body.innerHTML = '<tr><td colspan="3">Nenhum check-out hoje.</td></tr>';
+          return;
+        }
+        checkoutsHoje.forEach((item) => {
+          body.innerHTML += `
+            <tr>
+              <td>${item.nome || 'N/A'}</td>
+              <td>${item.quarto || 'N/A'}</td>
+              <td>${item.hora || 'N/A'}</td>
+            </tr>
+          `;
+        });
+      }
+
+      function renderTopRooms(filteredReservas) {
+        const revenues = {};
+        filteredReservas.forEach((reserva) => {
+          const roomNumber = reserva.quarto;
+          let valor = Number(reserva.total_faturamento ?? reserva.total ?? 0);
+          if (!valor) {
+            const diaria = Number(reserva.valor_diaria ?? reserva.valorDiaria ?? reserva.valor_diaria_base ?? reserva.quarto_valor_diaria ?? 0);
+            const dias = Number(reserva.qtd_dias ?? reserva.dias ?? 1);
+            const consumo = Number(reserva.consumo_total ?? 0);
+            valor = diaria * dias + consumo;
+          }
+          revenues[roomNumber] = revenues[roomNumber] || { total: 0, count: 0 };
+          if (!Number.isNaN(valor)) {
+            revenues[roomNumber].total += valor;
+            revenues[roomNumber].count += 1;
+          }
+        });
+
+        const topRooms = Object.entries(revenues)
+          .map(([quarto, data]) => ({
+            quarto,
+            count: data.count,
+            total: data.total,
+            tipo: allQuartos.find((q) => q.numero === Number(quarto))?.tipo || 'N/D',
+          }))
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 5);
+
+        const body = document.getElementById('topRoomsBody');
+        body.innerHTML = '';
+        if (topRooms.length === 0) {
+          body.innerHTML = '<tr><td colspan="4">Nenhum quarto com faturamento.</td></tr>';
+          return;
+        }
+        topRooms.forEach((room) => {
+          body.innerHTML += `
+            <tr>
+              <td>${room.quarto}</td>
+              <td>${room.tipo}</td>
+              <td>${room.count}</td>
+              <td>${formatCurrency(room.total)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      async function loadDashboard() {
+        try {
+          const [reservasResp, reservasFuturasResp, clientesResp, quartosResp, checkinsResp, checkoutsResp] = await Promise.all([
+            fetch('/api/reservas'),
+            fetch('/api/reservas?futuras=1'),
+            fetch('/api/clientes'),
+            fetch('/api/quartos'),
+            fetch('/api/checkins-hoje', { headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } }),
+            fetch('/api/checkouts-hoje', { headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } }),
+          ]);
+
+          if (!reservasResp.ok || !reservasFuturasResp.ok || !clientesResp.ok || !quartosResp.ok || !checkinsResp.ok || !checkoutsResp.ok) {
+            throw new Error('Erro ao carregar dados do relatório.');
+          }
+
+          allReservas = await reservasResp.json();
+          reservasFuturas = await reservasFuturasResp.json();
+          allClientes = await clientesResp.json();
+          allQuartos = await quartosResp.json();
+          const checkinsHoje = await checkinsResp.json();
+          const checkoutsHoje = await checkoutsResp.json();
+
+          buildTipoQuartoOptions();
+          updateDateTime();
+          renderSummaryCards(allReservas);
+          renderCheckinsHoje(checkinsHoje);
+          renderCheckoutsHoje(checkoutsHoje);
+          const filteredReservas = filterReservas();
+          renderLatestReservations(filteredReservas);
+          renderTopRooms(filteredReservas);
+
+          document.getElementById('filterStartDate').addEventListener('change', () => {
+            const filtered = filterReservas();
+            renderLatestReservations(filtered);
+            renderTopRooms(filtered);
+          });
+          document.getElementById('filterEndDate').addEventListener('change', () => {
+            const filtered = filterReservas();
+            renderLatestReservations(filtered);
+            renderTopRooms(filtered);
+          });
+          document.getElementById('filterStatus').addEventListener('change', () => {
+            const filtered = filterReservas();
+            renderLatestReservations(filtered);
+            renderTopRooms(filtered);
+          });
+          document.getElementById('filterTipoQuarto').addEventListener('change', () => {
+            const filtered = filterReservas();
+            renderLatestReservations(filtered);
+            renderTopRooms(filtered);
+          });
+          document.getElementById('clearReportFilters').addEventListener('click', () => {
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterTipoQuarto').value = '';
+            const filtered = filterReservas();
+            renderLatestReservations(filtered);
+            renderTopRooms(filtered);
+          });
+        } catch (error) {
+          console.error(error);
+          const container = document.querySelector('.main-content');
+          container.innerHTML = '<div class="card"><h2>Não foi possível carregar o relatório.</h2><p>Verifique a conexão com o servidor e tente novamente.</p></div>';
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+      });
+    </script>
+  </body>
+</html>

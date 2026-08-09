@@ -229,6 +229,54 @@
         overflow-x: auto;
       }
 
+      .filter-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .filter-group label {
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+        color: var(--text-color);
+        opacity: 0.85;
+      }
+
+      .filter-group input,
+      .filter-group select {
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background-color: white;
+        color: var(--text-color);
+        font-size: 0.95rem;
+      }
+
+      .filter-row .filter-group input:focus,
+      .filter-row .filter-group select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.12);
+      }
+
+      @media (max-width: 980px) {
+        .filter-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .filter-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
@@ -309,26 +357,6 @@
         align-items: center;
       }
 
-      /* Estilos para o container da busca */
-      .search-container {
-        margin-bottom: 1.5rem;
-      }
-
-      #searchInput {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-family: "Inter", sans-serif;
-      }
-
-      #searchInput:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-      }
-
       .status-ativo-text {
         color: #2f855a;
         display: flex;
@@ -378,6 +406,7 @@
         <a href="reservas.html" class="menu-btn active">📋 Reservas</a>
         <a href="produtos.html" class="menu-btn">🛒 Produtos</a>
         <a href="calendario.html" class="menu-btn">📅 Calendário</a>
+        <a href="relatorio.html" class="menu-btn">📊 Relatório</a>
         <a href="gerenciamento_usuarios.html" class="menu-btn" id="usuariosMenuBtn" style="display: none;">👥 Usuários</a>
         <div class="user-card">
           <div class="user-info">
@@ -398,7 +427,7 @@
             <div id="reservas-futuras-tab" class="tab">Reservas Futuras</div>
           </div>
         </div>
-        <div style="margin-bottom: 20px; text-align: right;">
+        <div style="margin-bottom: 20px; text-align: right; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
            <button 
                   onclick="exportarCSV()"
                   style="
@@ -412,26 +441,92 @@
               >
                Exportar para Excel (CSV)
            </button>
+           <button
+             onclick="limparFiltros()"
+             style="
+               background-color: #6c757d;
+               color: white;
+               padding: 10px 20px;
+               border: none;
+               border-radius: 5px;
+               cursor: pointer;
+               font-weight: bold;"
+           >
+             Limpar filtros
+           </button>
         </div>
         <div class="card">
           <div class="section-title" id="table-title">Todas as Reservas</div>
 
           <!-- Filtro de busca adicionado aqui -->
-          <div class="search-container">
-            <input
-              type="text"
-              id="searchInput"
-              onkeyup="filtrarReservas()"
-              placeholder="Buscar por nome, documento ou quarto..."
-            />
+          <div class="filter-row">
+            <div class="filter-group">
+              <label for="filterNomeMotivo">Nome / Motivo</label>
+              <input
+                type="text"
+                id="filterNomeMotivo"
+                placeholder="Filtrar por nome ou motivo"
+              />
+            </div>
+            <div class="filter-group">
+              <label for="filterQuarto">Quarto</label>
+              <input
+                type="text"
+                id="filterQuarto"
+                placeholder="Filtrar por número do quarto"
+              />
+            </div>
+            <div class="filter-group">
+              <label for="filterMesEntrada">Mês de Entrada</label>
+              <select id="filterMesEntrada">
+                <option value="">Todos os meses</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterDataSaida">Data de Saída</label>
+              <input
+                type="date"
+                id="filterDataSaida"
+              />
+            </div>
+            <div class="filter-group">
+              <label for="filterStatus">Status</label>
+              <select id="filterStatus">
+                <option value="">Todos</option>
+                <option value="ativo">Ativo</option>
+                <option value="finalizado">Finalizado</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterAcompanhantes">Acompanhantes</label>
+              <input
+                type="number"
+                min="0"
+                id="filterAcompanhantes"
+                placeholder="Quantidade"
+              />
+            </div>
           </div>
 
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>Nome</th>
+                      <th>Nome</th>
                   <th>Quarto</th>
+                  <th>Valor Diária</th>
                   <th>Data Entrada</th>
                   <th>Hora</th>
                   <th>Data Saída</th>
@@ -486,7 +581,7 @@
         tbody.innerHTML = "";
         if (!reservas || reservas.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="9">Nenhuma reserva encontrada.</td></tr>';
+            '<tr><td colspan="10">Nenhuma reserva encontrada.</td></tr>';
           return;
         }
         reservas.forEach((reserva) => {
@@ -501,10 +596,12 @@
             statusHTML = reserva.status || "N/A";
           }
 
+          const valorDiariaExibida = reserva.valor_diaria ?? reserva.valorDiaria ?? reserva.valor_diaria_base ?? reserva.valorDiariaBase ?? reserva.quarto_valor_diaria ?? "";
           tbody.innerHTML += `
            <tr>
                <td>${reserva.nome || "N/A"}</td>
                <td>${reserva.quarto || "N/A"}</td>
+               <td>${valorDiariaExibida !== "" ? `R$${valorDiariaExibida}` : "N/A"}</td>
                <td>${reserva.data_entrada || "N/A"}</td>
                <td>${reserva.hora_entrada || "N/A"}</td>
                <td>${reserva.data_saida || "N/A"}</td>
@@ -520,25 +617,77 @@
         });
       }
 
-      // Função para filtrar as reservas
-      function filtrarReservas() {
-        const searchTerm = document
-          .getElementById("searchInput")
+      // Função para formatar data YYYY-MM-DD para DD/MM/YYYY
+      function formatarDataBrasil(dataIso) {
+        if (!dataIso) return "";
+        const [ano, mes, dia] = dataIso.split("-");
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      function obterReservasFiltradas() {
+        const nomeMotivoTerm = document
+          .getElementById("filterNomeMotivo")
           .value.toLowerCase();
-        const reservasFiltradas = todasAsReservas.filter((reserva) => {
-          const nome = reserva.nome || "";
-          const cpf = reserva.cliente_cpf || "";
-          const passaporte = reserva.cliente_passaporte || ""; // NOVO: Captura o passaporte do cliente
-          const quarto = reserva.quarto ? reserva.quarto.toString() : "";
+        const quartoTerm = document
+          .getElementById("filterQuarto")
+          .value.toLowerCase();
+        const mesEntrada = document.getElementById("filterMesEntrada").value;
+        const dataSaidaFiltro = document.getElementById("filterDataSaida").value;
+        const statusFiltro = document
+          .getElementById("filterStatus")
+          .value.toLowerCase();
+        const acompanhantesFiltro = document.getElementById(
+          "filterAcompanhantes"
+        ).value;
+
+        const dataSaidaFormatada = dataSaidaFiltro
+          ? formatarDataBrasil(dataSaidaFiltro)
+          : "";
+
+        return todasAsReservas.filter((reserva) => {
+          const nome = (reserva.nome || "").toLowerCase();
+          const motivo = (reserva.motivo_hospedagem || "").toLowerCase();
+          const quarto = reserva.quarto ? reserva.quarto.toString().toLowerCase() : "";
+          const status = (reserva.status || "").toLowerCase();
+          const dataEntrada = reserva.data_entrada || "";
+          const dataSaida = reserva.data_saida || "";
+          const acompanhantes = reserva.num_acompanhantes || 0;
+
+          const combinacaoNomeMotivo = `${nome} ${motivo}`;
+          const campoNomeMotivoMatch = combinacaoNomeMotivo.includes(nomeMotivoTerm);
+          const campoQuartoMatch = quarto.includes(quartoTerm);
+          const campoStatusMatch = !statusFiltro || status === statusFiltro;
+          const campoAcompanhantesMatch =
+            acompanhantesFiltro === "" || acompanhantes === Number(acompanhantesFiltro);
+          const campoDataSaidaMatch =
+            !dataSaidaFormatada || dataSaida === dataSaidaFormatada;
+
+          let campoMesEntradaMatch = true;
+          if (mesEntrada) {
+            const partes = dataEntrada.split("/");
+            if (partes.length === 3) {
+              const mes = Number(partes[1]);
+              campoMesEntradaMatch = mes === Number(mesEntrada);
+            } else {
+              campoMesEntradaMatch = false;
+            }
+          }
 
           return (
-            nome.toLowerCase().includes(searchTerm) ||
-            cpf.includes(searchTerm) ||
-            passaporte.toLowerCase().includes(searchTerm) || // NOVO: Inclui busca por passaporte
-            quarto.includes(searchTerm)
+            campoNomeMotivoMatch &&
+            campoQuartoMatch &&
+            campoMesEntradaMatch &&
+            campoDataSaidaMatch &&
+            campoStatusMatch &&
+            campoAcompanhantesMatch
           );
         });
+      }
+
+      function filtrarReservas() {
+        const reservasFiltradas = obterReservasFiltradas();
         renderizarTabela(reservasFiltradas);
+        return reservasFiltradas;
       }
 
       async function carregarReservas(futuras = false) {
@@ -566,7 +715,7 @@
           }
           const data = await response.json();
           todasAsReservas = data; // Armazena a lista completa
-          renderizarTabela(todasAsReservas); // Renderiza a tabela com os dados completos
+          filtrarReservas(); // Renderiza a tabela de acordo com os filtros selecionados
         } catch (error) {
           const tbody = document.getElementById("reservas-tbody");
           tbody.innerHTML =
@@ -619,44 +768,75 @@
       }
 
       // Função para exportar dados para CSV (Excel)
-      async function exportarCSV() {
-        const token = sessionStorage.getItem("token");
-        if (!token) {
-          alert("Sessão expirada. Faça login novamente.");
-          window.location.href = "login.html";
+      function construirCSV(reservas) {
+        const cabecalho = [
+          "Nome",
+          "Quarto",
+          "Data Entrada",
+          "Hora Entrada",
+          "Data Saída",
+          "Hora Saída",
+          "Valor Diária",
+          "Status",
+          "Acompanhantes",
+          "Motivo",
+        ];
+
+        const rows = reservas.map((reserva) => {
+          const acompanhantes = reserva.num_acompanhantes || 0;
+          const motivo = reserva.motivo_hospedagem || "";
+          const status = reserva.status || "";
+          const valorDiaria = reserva.valor_diaria ?? reserva.valorDiaria ?? reserva.valor_diaria_base ?? reserva.valorDiariaBase ?? reserva.quarto_valor_diaria ?? "";
+
+          return [
+            reserva.nome || "",
+            reserva.quarto || "",
+            reserva.data_entrada || "",
+            reserva.hora_entrada || "",
+            reserva.data_saida || "",
+            reserva.hora_saida || "",
+            valorDiaria,
+            status,
+            acompanhantes,
+            motivo,
+          ]
+            .map((campo) => {
+              const valor = campo === null || campo === undefined ? "" : campo.toString();
+              return `"${valor.replace(/"/g, '""')}"`;
+            })
+            .join(";");
+        });
+
+        return [cabecalho.join(";"), ...rows].join("\r\n");
+      }
+
+      function exportarCSV() {
+        const reservasFiltradas = obterReservasFiltradas();
+        if (!reservasFiltradas || reservasFiltradas.length === 0) {
+          alert("Nenhuma reserva encontrada para exportar.");
           return;
         }
 
-        try {
-          const response = await fetch("/api/reservas-exportar", {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+        const csv = construirCSV(reservasFiltradas);
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "reservas_filtradas.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
 
-          if (!response.ok) {
-            throw new Error(`Erro ao exportar: ${response.statusText}`);
-          }
-
-          // Converter resposta para blob (arquivo binário)
-          const blob = await response.blob();
-
-          // Criar link para download
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "reservas_consumos.csv";
-          document.body.appendChild(a);
-          a.click();
-
-          // Limpar
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        } catch (error) {
-          console.error("Erro ao exportar CSV:", error);
-          alert("Erro ao exportar dados. Verifique o console para detalhes.");
-        }
+      function limparFiltros() {
+        document.getElementById("filterNomeMotivo").value = "";
+        document.getElementById("filterQuarto").value = "";
+        document.getElementById("filterMesEntrada").value = "";
+        document.getElementById("filterDataSaida").value = "";
+        document.getElementById("filterStatus").value = "";
+        document.getElementById("filterAcompanhantes").value = "";
+        filtrarReservas();
       }
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -669,6 +849,22 @@
 
         todasTab.addEventListener("click", () => carregarReservas(false));
         futurasTab.addEventListener("click", () => carregarReservas(true));
+
+        const filterInputs = [
+          document.getElementById("filterNomeMotivo"),
+          document.getElementById("filterQuarto"),
+          document.getElementById("filterMesEntrada"),
+          document.getElementById("filterDataSaida"),
+          document.getElementById("filterStatus"),
+          document.getElementById("filterAcompanhantes"),
+        ];
+
+        filterInputs.forEach((field) => {
+          if (field) {
+            field.addEventListener("input", filtrarReservas);
+            field.addEventListener("change", filtrarReservas);
+          }
+        });
 
         closeModalBtn.addEventListener(
           "click",
